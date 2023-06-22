@@ -35,7 +35,6 @@ struct Node {
 };
 
 // Struct to represent the order history linked list
-// Struct to represent the order history linked list
 struct OrderHistoryLinkedList {
     Node* head;
     int size; // New member variable to keep track of the size
@@ -97,12 +96,6 @@ struct OrderHistoryLinkedList {
     }
 };
 
-
-
-// Comparator function for sorting food items by name in alphabetical order
-bool compareByName(const FoodItem& item1, const FoodItem& item2) {
-    return item1.name < item2.name;
-}
 
 // Comparator function for sorting food items by price in ascending order
 bool compareByPrice(const FoodItem& item1, const FoodItem& item2) {
@@ -254,8 +247,8 @@ int main() {
                             cout << "3. View cart" << endl;
                             cout << "4. Checkout" << endl;
                             cout << "5. Search for a food item" << endl;
-                            cout << "6. Sort food items by name" << endl;
-                            cout << "7. Sort food items by price (low to high)" << endl;
+                            cout << "6. Sort food items by low price" << endl;
+                            cout << "7. Sort food items by high price" << endl;
                             cout << "8. Display order history" << endl;
                             cout << "9. Logout" << endl;
                             cout << "Enter your choice: ";
@@ -334,13 +327,15 @@ int main() {
                                     break;
                                 }
                                 case '6': {
-                                    sort(availableFoodItems.begin(), availableFoodItems.end(), compareByName);
-                                    cout << "Food items sorted by name." << endl;
+                                    sort(availableFoodItems.begin(), availableFoodItems.end(), compareByPrice);
+                                    cout << "Food items sorted by low price." << endl;
+                                    displayAvailableFoodItems(availableFoodItems);
                                     break;
                                 }
                                 case '7': {
-                                    sort(availableFoodItems.begin(), availableFoodItems.end(), compareByPrice);
-                                    cout << "Food items sorted by price (low to high)." << endl;
+                                    sort(availableFoodItems.rbegin(), availableFoodItems.rend(), compareByPrice);
+                                    cout << "Food items sorted by high price." << endl;
+                                    displayAvailableFoodItems(availableFoodItems);
                                     break;
                                 }
                                 case '8': {
