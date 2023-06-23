@@ -243,7 +243,7 @@ int searchFoodItem(const vector<FoodItem>& foodItems, const string& itemName) {
 }
 
 // Function to register a new user
-void registerUser(vector<User>& users, LinkedList<Order>& orders) {
+void registerUser(vector<User>& users) {
     User newUser;
     cout << "=== User Registration ===" << endl;
     cout << "Enter a username: ";
@@ -287,7 +287,6 @@ int main() {
     Queue<Order> orderQueue;
 
     // Create an instance of OrderHistoryLinkedList
-    LinkedList<Order> orderHistory2;
     LinkedList<void*> orderHistory;
 
     // Menu loop
@@ -306,7 +305,7 @@ int main() {
 
         switch (choice) {
             case '1': {
-                registerUser(registeredUsers, orderHistory2);
+                registerUser(registeredUsers);
                 break;
             }
             case '2': {
@@ -394,9 +393,7 @@ int main() {
                                     if (!orderQueue.isEmpty()) {
                                         while (!orderQueue.isEmpty()) {
                                             Order currentOrder = orderQueue.peek();
-                                            orderHistory2.insert(currentOrder);
                                             orderHistory.insert(&currentOrder);
-                                            currentOrder.orderId = orderHistory2.size + 1; // Assign order ID
                                             currentOrder.orderId = orderHistory.size + 1; // Assign order ID
                                             processOrder(currentOrder);
                                             orderQueue.dequeue();
