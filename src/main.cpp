@@ -2,11 +2,94 @@
 #include <string>
 #include <vector>
 #include <stack>
-#include <queue>
+//#include <queue>
 #include <algorithm>
 #include <limits>
 
 using namespace std;
+
+template <typename T>
+struct Queue {
+private:
+    struct Node {
+        T data;
+        Node* next;
+        Node(const T& value) : data(value), next(nullptr) {}
+    };
+
+    Node* front;
+    Node* rear;
+
+public:
+    Queue() : front(nullptr), rear(nullptr) {}
+
+    bool isEmpty() {
+        return front == nullptr;
+    }
+
+    void display() {
+        if (isEmpty()) {
+            cout << "Queue is empty." << endl;
+            return;
+        }
+
+        cout << "Elements in the queue: ";
+        Node* current = front;
+        while (current != nullptr) {
+            cout << current->data << " ";
+            current = current->next;
+        }
+        cout << endl;
+    }
+
+    void enqueue(const T& element) {
+        Node* newNode = new Node(element);
+
+        if (isEmpty()) {
+            front = rear = newNode;
+        } else {
+            rear->next = newNode;
+            rear = newNode;
+        }
+    }
+
+    void dequeue() {
+        if (isEmpty()) {
+            cout << "Queue is empty. Cannot dequeue." << endl;
+            return;
+        }
+
+        Node* temp = front;
+        front = front->next;
+
+        delete temp;
+
+        if (isEmpty()) {
+            rear = nullptr;
+        }
+    }
+
+    T peek() {
+        if (isEmpty()) {
+            cout << "Queue is empty. No element to peek." << endl;
+            return T();
+        }
+
+        return front->data;
+    }
+
+    void clear() {
+        while (front != nullptr) {
+            Node* temp = front;
+            front = front->next;
+            delete temp;
+        }
+
+        rear = nullptr;
+        cout << "Queue is cleared." << endl;
+    }
+};
+
 
 // Struct to represent a food item
 struct FoodItem {
@@ -23,79 +106,87 @@ struct User {
 };
 
 // Struct to represent an order
-struct Order {
+struct Order : public error_code {
     int orderId, quantity;
     User user;
 };
 
-// Struct for a node in the order history linked list
+template<typename T>
 struct Node {
-    Order order;
-    Node* next;
+    T data;
+    Node<T>* next;
 };
 
-// Struct to represent the order history linked list
-struct OrderHistoryLinkedList {
-    Node* head;
-    int size; // New member variable to keep track of the size
+template<typename T>
+struct LinkedList {
+    Node<T>* head;
+    int size;
 
-    OrderHistoryLinkedList() : head(nullptr), size(0) {}
+    LinkedList() : head(nullptr) {}
 
-    ~OrderHistoryLinkedList() {
-        while (head != nullptr) {
-            Node* temp = head;
-            head = head->next;
-            delete temp;
-        }
-    }
-
-    void insertOrder(const Order& order) {
-        Node* newNode = new Node;
-        newNode->order = order;
+    void insert(T value) {
+        Node<T>* newNode = new Node<T>;
+        newNode->data = value;
         newNode->next = nullptr;
 
         if (head == nullptr) {
             head = newNode;
         } else {
-            Node* temp = head;
-            while (temp->next != nullptr) {
-                temp = temp->next;
+            Node<T>* curr = head;
+            while (curr->next != nullptr) {
+                curr = curr->next;
+                size++;
             }
-            temp->next = newNode;
+            curr->next = newNode;
+            size++;
         }
-
-        size++; // Increase the size after inserting an order
     }
 
-    void displayOrderHistory() {
-        Node* temp = head;
-        if (temp == nullptr) {
+    void remove(T value) {
+        if (head == nullptr) {
+            return;
+        }
+
+        if (head->data == value) {
+            Node<T>* temp = head;
+            head = head->next;
+            delete temp;
+            return;
+        }
+
+        Node<T>* curr = head;
+        while (curr->next != nullptr && curr->next->data != value) {
+            curr = curr->next;
+        }
+
+        if (curr->next != nullptr) {
+            Node<T>* temp = curr->next;
+            curr->next = curr->next->next;
+            delete temp;
+        }
+    }
+
+    template<typename U>
+    void display() {
+        static_assert(std::is_class<U>::value, "U must be a struct or class type.");
+
+        Node<T>* curr = head;
+        if (curr == nullptr) {
             cout << "No order history." << endl;
             return;
         }
 
-        cout << "Order History:" << endl;
-        while (temp != nullptr) {
-            cout << "Order ID: " << temp->order.orderId << endl;
-            cout << "Username: " << temp->order.user.username << endl;
+        while (curr != nullptr) {
+            U* item = static_cast<U*>(curr->data);
+            // Display properties of the struct U
+            cout << "Order ID: " << static_cast<int>((item->orderId)) << endl;
+            cout << "Username: " << item->user.username << endl;
+            cout << "Quantity: " << item->quantity << endl;
 
-            // Display the items in the order
-            cout << "Cart Contents:" << endl;
-            while (!temp->order.user.cart.empty()) {
-                FoodItem currentItem = temp->order.user.cart.top();
-                cout << "ID: " << currentItem.id << endl;
-                cout << "Name: " << currentItem.name << endl;
-                cout << "Price: $" << currentItem.price << endl;
-                cout << "Quantity: " << temp->order.quantity << endl;
-                cout << endl;
-                temp->order.user.cart.pop();
-            }
-
-            temp = temp->next;
+            curr = curr->next;
         }
     }
 };
-
 
 // Comparator function for sorting food items by price in ascending order
 bool compareByPrice(const FoodItem& item1, const FoodItem& item2) {
@@ -109,7 +200,7 @@ void addToCart(User* user, FoodItem* foodItem) {
 }
 
 // Function to process an order
-void processOrder(Order order, OrderHistoryLinkedList& orderHistory) {
+void processOrder(Order order) {
     cout << "Processing Order ID: " << order.orderId << endl;
     cout << "Username: " << order.user.username << endl;
     cout << "Password: " << order.user.password << endl;
@@ -122,19 +213,13 @@ void processOrder(Order order, OrderHistoryLinkedList& orderHistory) {
         cout << "ID: " << currentItem.id << endl;
         cout << "Name: " << currentItem.name << endl;
         cout << "Price: $" << currentItem.price << endl;
+        cout << "Quantity: " << order.quantity << endl;
         totalPrice += currentItem.price;
         order.user.cart.pop();
     }
     cout << "Total Price: $" << totalPrice << endl;
     cout << "Order processed successfully!" << endl;
-
-    // Assign the order ID
-    order.orderId = orderHistory.size + 1;
-
-    // Insert the order into the order history
-    orderHistory.insertOrder(order);
 }
-
 
 // Function to display the available food items
 void displayAvailableFoodItems(const vector<FoodItem>& foodItems) {
@@ -158,7 +243,7 @@ int searchFoodItem(const vector<FoodItem>& foodItems, const string& itemName) {
 }
 
 // Function to register a new user
-void registerUser(vector<User>& users, OrderHistoryLinkedList& orderHistory) {
+void registerUser(vector<User>& users) {
     User newUser;
     cout << "=== User Registration ===" << endl;
     cout << "Enter a username: ";
@@ -199,10 +284,10 @@ int main() {
     availableFoodItems.push_back({3, "Salad", 7.99});
 
     // Create a queue for order processing
-    queue<Order> orderQueue;
+    Queue<Order> orderQueue;
 
     // Create an instance of OrderHistoryLinkedList
-    OrderHistoryLinkedList orderHistory;
+    LinkedList<void*> orderHistory;
 
     // Menu loop
     char choice;
@@ -220,7 +305,7 @@ int main() {
 
         switch (choice) {
             case '1': {
-                registerUser(registeredUsers, orderHistory);
+                registerUser(registeredUsers);
                 break;
             }
             case '2': {
@@ -281,7 +366,8 @@ int main() {
                                         order.orderId = -1; // Temporary order ID, will be assigned later
                                         order.user = user;
                                         order.quantity = quantity;
-                                        orderQueue.push(order);
+                                        orderQueue.enqueue(order);
+                                        //orderQueue.push(order);
 
                                         cout << "Order placed successfully!" << endl;
                                     } else {
@@ -304,10 +390,14 @@ int main() {
                                 }
                                 case '4': {
                                     // Process the order
-                                    if (!orderQueue.empty()) {
-                                        Order nextOrder = orderQueue.front();
-                                        orderQueue.pop();
-                                        processOrder(nextOrder, orderHistory);
+                                    if (!orderQueue.isEmpty()) {
+                                        while (!orderQueue.isEmpty()) {
+                                            Order currentOrder = orderQueue.peek();
+                                            orderHistory.insert(&currentOrder);
+                                            currentOrder.orderId = orderHistory.size + 1; // Assign order ID
+                                            processOrder(currentOrder);
+                                            orderQueue.dequeue();
+                                        }
                                     } else {
                                         cout << "No orders in the queue." << endl;
                                     }
@@ -339,7 +429,8 @@ int main() {
                                     break;
                                 }
                                 case '8': {
-                                    orderHistory.displayOrderHistory();
+                                    //orderHistory.displayOrderHistory();
+                                    orderHistory.display<Order>();
                                     break;
                                 }
                                 case '9': {
