@@ -1,12 +1,51 @@
 #include <iostream>
 #include <string>
-#include <vector>
-#include <stack>
-//#include <queue>
 #include <algorithm>
-#include <limits>
+#include <random> // Include the random library
 
 using namespace std;
+
+template <typename T>
+class Stack {
+private:
+    vector<T> stack;
+
+public:
+    // Check if the stack is empty
+    bool isEmpty() const {
+        return stack.empty();
+    }
+
+    // Push an element onto the stack
+    void push(const T& element) {
+        stack.push_back(element);
+    }
+
+    // Remove and return the top element from the stack
+    T pop() {
+        if (isEmpty()) {
+            throw out_of_range("Stack is empty");
+        }
+
+        T topElement = stack.back();
+        stack.pop_back();
+        return topElement;
+    }
+
+    // Return the top element of the stack without removing it
+    T& top() {
+        if (isEmpty()) {
+            throw out_of_range("Stack is empty");
+        }
+
+        return stack.back();
+    }
+
+    // Return the size of the stack
+    size_t size() const {
+        return stack.size();
+    }
+};
 
 template <typename T>
 struct Queue {
@@ -77,19 +116,7 @@ public:
 
         return front->data;
     }
-
-    void clear() {
-        while (front != nullptr) {
-            Node* temp = front;
-            front = front->next;
-            delete temp;
-        }
-
-        rear = nullptr;
-        cout << "Queue is cleared." << endl;
-    }
 };
-
 
 // Struct to represent a food item
 struct FoodItem {
@@ -102,91 +129,68 @@ struct FoodItem {
 struct User {
     string username;
     string password;
-    stack<FoodItem> cart;
+    Stack<FoodItem> cart;
 };
 
 // Struct to represent an order
-struct Order : public error_code {
+struct Order {
     int orderId, quantity;
     User user;
 };
 
-template<typename T>
-struct Node {
-    T data;
-    Node<T>* next;
+// Node struct for the linked list
+struct OrderNode {
+    Order order;
+    OrderNode* next;
+
+    OrderNode(const Order& order) : order(order), next(nullptr) {}
 };
 
-template<typename T>
-struct LinkedList {
-    Node<T>* head;
-    int size;
+// Linked list to store order history
+class OrderHistory {
+private:
+    OrderNode* head;
+    OrderNode* tail;
 
-    LinkedList() : head(nullptr) {}
+public:
+    OrderHistory() : head(nullptr), tail(nullptr) {}
 
-    void insert(T value) {
-        Node<T>* newNode = new Node<T>;
-        newNode->data = value;
-        newNode->next = nullptr;
-
+    void addOrder(const Order& order) {
+        OrderNode* newNode = new OrderNode(order);
         if (head == nullptr) {
-            head = newNode;
+            head = tail = newNode;
         } else {
-            Node<T>* curr = head;
-            while (curr->next != nullptr) {
-                curr = curr->next;
-                size++;
-            }
-            curr->next = newNode;
-            size++;
+            tail->next = newNode;
+            tail = newNode;
         }
     }
 
-    void remove(T value) {
+    void displayOrderHistory() const {
         if (head == nullptr) {
-            return;
-        }
-
-        if (head->data == value) {
-            Node<T>* temp = head;
-            head = head->next;
-            delete temp;
-            return;
-        }
-
-        Node<T>* curr = head;
-        while (curr->next != nullptr && curr->next->data != value) {
-            curr = curr->next;
-        }
-
-        if (curr->next != nullptr) {
-            Node<T>* temp = curr->next;
-            curr->next = curr->next->next;
-            delete temp;
+            cout << "Order history is empty." << endl;
+        } else {
+            cout << "Order History:" << endl;
+            OrderNode* currentNode = head;
+            while (currentNode != nullptr) {
+                cout << "Order ID: " << currentNode->order.orderId << endl;
+                cout << "Username: " << currentNode->order.user.username << endl;
+                cout << "Quantity: " << currentNode->order.quantity << endl;
+                cout << endl;
+                currentNode = currentNode->next;
+            }
         }
     }
 
-    template<typename U>
-    void display() {
-        static_assert(std::is_class<U>::value, "U must be a struct or class type.");
-
-        Node<T>* curr = head;
-        if (curr == nullptr) {
-            cout << "No order history." << endl;
-            return;
-        }
-
-        while (curr != nullptr) {
-            U* item = static_cast<U*>(curr->data);
-            // Display properties of the struct U
-            cout << "Order ID: " << static_cast<int>((item->orderId)) << endl;
-            cout << "Username: " << item->user.username << endl;
-            cout << "Quantity: " << item->quantity << endl;
-
-            curr = curr->next;
+    ~OrderHistory() {
+        OrderNode* currentNode = head;
+        while (currentNode != nullptr) {
+            OrderNode* nextNode = currentNode->next;
+            delete currentNode;
+            currentNode = nextNode;
         }
     }
 };
+
 
 // Comparator function for sorting food items by price in ascending order
 bool compareByPrice(const FoodItem& item1, const FoodItem& item2) {
@@ -200,7 +204,7 @@ void addToCart(User* user, FoodItem* foodItem) {
 }
 
 // Function to process an order
-void processOrder(Order order) {
+void processOrder(User* user, Order order) {
     cout << "Processing Order ID: " << order.orderId << endl;
     cout << "Username: " << order.user.username << endl;
     cout << "Password: " << order.user.password << endl;
@@ -208,28 +212,48 @@ void processOrder(Order order) {
     // Process the items in the cart
     double totalPrice = 0.0;
     cout << "Cart Contents:" << endl;
-    while (!order.user.cart.empty()) {
+    while (!order.user.cart.isEmpty()) {
         FoodItem currentItem = order.user.cart.top();
         cout << "ID: " << currentItem.id << endl;
         cout << "Name: " << currentItem.name << endl;
         cout << "Price: $" << currentItem.price << endl;
         cout << "Quantity: " << order.quantity << endl;
-        totalPrice += currentItem.price;
+        totalPrice += (currentItem.price * order.quantity);
+        cout << endl;
         order.user.cart.pop();
     }
+
     cout << "Total Price: $" << totalPrice << endl;
     cout << "Order processed successfully!" << endl;
+
+    user->cart = Stack<FoodItem>(); // Clear the cart
 }
 
-// Function to display the available food items
+
+
+// Function to generate a random order ID
+int generateRandomOrderId() {
+    random_device rd; // Obtain a random seed from the operating system
+    mt19937 gen(rd()); // Initialize the random number generator
+    uniform_int_distribution<> dis(1000, 9999); // Define the range of order IDs
+    return dis(gen); // Generate a random order ID
+}
+
+
+// Display the available food items
 void displayAvailableFoodItems(const vector<FoodItem>& foodItems) {
     cout << "Available Food Items:" << endl;
-    for (const auto& item : foodItems) {
-        cout << "ID: " << item.id << endl;
-        cout << "Name: " << item.name << endl;
-        cout << "Price: $" << item.price << endl;
+    for (const auto& foodItem : foodItems) {
+        cout << "ID: " << foodItem.id << endl;
+        cout << "Name: " << foodItem.name << endl;
+        cout << "Price: $" << foodItem.price << endl;
         cout << endl;
     }
+}
+
+// Display the order history
+void displayOrderHistory(const OrderHistory& orderHistory) {
+    orderHistory.displayOrderHistory();
 }
 
 // Function to search for a food item by name
@@ -242,226 +266,171 @@ int searchFoodItem(const vector<FoodItem>& foodItems, const string& itemName) {
     return -1; // Return -1 if the item is not found
 }
 
-// Function to register a new user
-void registerUser(vector<User>& users) {
-    User newUser;
-    cout << "=== User Registration ===" << endl;
-    cout << "Enter a username: ";
-    cin >> newUser.username;
-
-    // Check if the username already exists
-    for (const auto& user : users) {
-        if (user.username == newUser.username) {
-            cout << "Username already exists. Please choose a different username." << endl;
-            return;
+// Function to handle user's choice
+void handleUserChoice(char choice, User *user, vector<FoodItem>& availableFoodItems, Queue<Order>* orderQueue, OrderHistory* orderHistory) {
+    switch (choice) {
+        case '1': {
+            displayAvailableFoodItems(availableFoodItems);
+            break;
         }
+        case '2': {
+            displayAvailableFoodItems(availableFoodItems);
+            // Prompt the user to select a food item
+            int selectedItemId;
+            cout << "Enter the ID of the food item you want to add to the cart: ";
+            cin >> selectedItemId;
+
+            // Find the selected food item in the available food items list
+            FoodItem* selectedFoodItem = nullptr;
+            for (auto& foodItem : availableFoodItems) {
+                if (foodItem.id == selectedItemId) {
+                    selectedFoodItem = &foodItem;
+                    break;
+                }
+            }
+
+            // Add the selected food item to the user's cart
+            if (selectedFoodItem != nullptr) {
+                addToCart(user, selectedFoodItem);
+
+                // Prompt the user for the quantity
+                int quantity;
+                cout << "Enter the quantity: ";
+                cin >> quantity;
+
+                // Create an order and enqueue it for processing
+                Order order;
+                order.orderId = -1; // Temporary order ID, will be assigned later
+                order.user = *user;
+                order.quantity = quantity;
+                orderQueue->enqueue(order);
+
+                cout << "Order placed successfully!" << endl;
+            } else {
+                cout << "Invalid food item ID. Please try again." << endl;
+            }
+            break;
+        }
+        case '3': {
+            cout << "Cart Contents:" << endl;
+            // create temp cart var
+            Stack<FoodItem> tempCart = user->cart;
+
+            while (!tempCart.isEmpty()) {
+                FoodItem currentItem = user->cart.top();
+                cout << "ID: " << currentItem.id << endl;
+                cout << "Name: " << currentItem.name << endl;
+                cout << "Price: $" << currentItem.price << endl;
+                cout << endl;
+                tempCart.pop();
+            }
+            break;
+        }
+        case '4': {
+            if (orderQueue->isEmpty()) {
+                cout << "No orders to process." << endl;
+            } else {
+                while (!orderQueue->isEmpty()) {
+                    Order currentOrder = orderQueue->peek();
+                    // Assign a random order ID
+                    currentOrder.orderId = generateRandomOrderId();
+                    orderHistory->addOrder(currentOrder);
+                    processOrder(user, currentOrder);
+                    orderQueue->dequeue();
+                }
+            }
+            break;
+        }
+        case '5': {
+            string itemName;
+            cout << "Enter the name of the food item you want to search: ";
+            cin.ignore();
+            getline(cin, itemName);
+
+            int index = searchFoodItem(availableFoodItems, itemName);
+            if (index != -1) {
+                cout << "Food item found at index " << index << "." << endl;
+            } else {
+                cout << "Food item not found." << endl;
+            }
+            break;
+        }
+        case '6': {
+            vector<FoodItem> sortedItems = availableFoodItems;
+            sort(sortedItems.begin(), sortedItems.end(), compareByPrice);
+            displayAvailableFoodItems(sortedItems);
+            break;
+        }
+        case '7': {
+            vector<FoodItem> sortedItems = availableFoodItems;
+            sort(sortedItems.begin(), sortedItems.end(), compareByPrice);
+            reverse(sortedItems.begin(), sortedItems.end());
+            displayAvailableFoodItems(sortedItems);
+            break;
+        }
+        case '8': {
+            displayOrderHistory(*orderHistory);
+            break;
+        }
+        case '9': {
+            cout << "Exiting the program. Thank you!" << endl;
+            break;
+        }
+        default:
+            cout << "Invalid choice. Please try again." << endl;
+            break;
     }
-
-    cout << "Enter a password: ";
-    cin >> newUser.password;
-
-    string passwordConfirmation;
-    cout << "Confirm your password: ";
-    cin >> passwordConfirmation;
-
-    if (newUser.password != passwordConfirmation) {
-        cout << "Password confirmation does not match. Please try again." << endl;
-        return;
-    }
-
-    users.push_back(newUser);
-    cout << "Registration successful!" << endl;
 }
 
+void displayMenu() {
+    cout << "=== Selamat Datang di Angkringan Amikom ===" << endl;
+    cout << "1. Display available food items" << endl;
+    cout << "2. Add food item to cart" << endl;
+    cout << "3. Display cart contents" << endl;
+    cout << "4. Process orders" << endl;
+    cout << "5. Search for a food item by name" << endl;
+    cout << "6. Sort food items by price (ascending)" << endl;
+    cout << "7. Sort food items by price (descending)" << endl;
+    cout << "8. Display order history" << endl;
+    cout << "9. Exit" << endl;
+    cout << "Enter your choice: ";
+}
+
+void initializeVariables(User& user, vector<FoodItem>& availableFoodItems, Queue<Order>& orderQueue, OrderHistory& orderHistory) {
+    // Initialize the user
+    user.username = "JohnDoe";
+    user.password = "password123";
+
+    // Initialize the available food items
+    FoodItem foodItem1 = {1, "Burger", 5.99};
+    FoodItem foodItem2 = {2, "Pizza", 8.99};
+
+    // Add the food items to the vector
+    availableFoodItems.push_back(foodItem1);
+    availableFoodItems.push_back(foodItem2);
+
+    // Initialize the order queue and order history
+    orderQueue = Queue<Order>();
+    orderHistory = OrderHistory();
+}
+
+
 int main() {
-    // Create a vector to store registered users
-    vector<User> registeredUsers;
-
-    // Create a list of available food items
+    User user;
     vector<FoodItem> availableFoodItems;
-    availableFoodItems.push_back({1, "Pizza", 9.99});
-    availableFoodItems.push_back({2, "Burger", 5.99});
-    availableFoodItems.push_back({3, "Salad", 7.99});
-
-    // Create a queue for order processing
     Queue<Order> orderQueue;
+    OrderHistory orderHistory;
 
-    // Create an instance of OrderHistoryLinkedList
-    LinkedList<void*> orderHistory;
+    initializeVariables(user, availableFoodItems, orderQueue, orderHistory);
 
     // Menu loop
     char choice;
     do {
-        // Display the main menu
-        cout << "=== Selamat Datang di Angkringan Amikom ===" << endl;
-        cout << "1. Register" << endl;
-        cout << "2. Login" << endl;
-        cout << "3. Exit" << endl;
-        cout << "Enter your choice: ";
+        displayMenu();
         cin >> choice;
-
-        // Clear the newline character from the input buffer
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-        switch (choice) {
-            case '1': {
-                registerUser(registeredUsers);
-                break;
-            }
-            case '2': {
-                string username, password;
-                cout << "=== User Login ===" << endl;
-                cout << "Enter your username: ";
-                cin >> username;
-                cout << "Enter your password: ";
-                cin >> password;
-
-                // Find the user by username
-                bool userFound = false;
-                for (const auto& user : registeredUsers) {
-                    if (user.username == username && user.password == password) {
-                        userFound = true;
-                        User loggedInUser = user;
-
-                        // User menu loop
-                        char userChoice;
-                        do {
-                            cout << "=== User Menu ===" << endl;
-                            cout << "1. Display available food items" << endl;
-                            cout << "2. Add item to cart" << endl;
-                            cout << "3. View cart" << endl;
-                            cout << "4. Checkout" << endl;
-                            cout << "5. Search for a food item" << endl;
-                            cout << "6. Sort food items by low price" << endl;
-                            cout << "7. Sort food items by high price" << endl;
-                            cout << "8. Display order history" << endl;
-                            cout << "9. Logout" << endl;
-                            cout << "Enter your choice: ";
-                            cin >> userChoice;
-
-                            // Clear the newline character from the input buffer
-                            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-
-                            switch (userChoice) {
-                                case '1': {
-                                    displayAvailableFoodItems(availableFoodItems);
-                                    break;
-                                }
-                                case '2': {
-                                    int itemId;
-                                    cout << "Enter the ID of the food item: ";
-                                    cin >> itemId;
-                                    // Find the food item by ID
-                                    auto it = find_if(availableFoodItems.begin(), availableFoodItems.end(),
-                                                      [itemId](const FoodItem& item) { return item.id == itemId; });
-                                    if (it != availableFoodItems.end()) {
-                                        addToCart(&loggedInUser, &(*it));
-                                        // Prompt the user for the quantity
-                                        int quantity;
-                                        cout << "Enter the quantity: ";
-                                        cin >> quantity;
-
-                                        // Create an order and enqueue it for processing
-                                        Order order;
-                                        order.orderId = -1; // Temporary order ID, will be assigned later
-                                        order.user = user;
-                                        order.quantity = quantity;
-                                        orderQueue.enqueue(order);
-                                        //orderQueue.push(order);
-
-                                        cout << "Order placed successfully!" << endl;
-                                    } else {
-                                        cout << "Invalid item ID." << endl;
-                                    }
-                                    break;
-                                }
-                                case '3': {
-                                    cout << "Cart Contents:" << endl;
-                                    stack<FoodItem> tempCart = loggedInUser.cart;
-                                    while (!tempCart.empty()) {
-                                        FoodItem currentItem = tempCart.top();
-                                        cout << "ID: " << currentItem.id << endl;
-                                        cout << "Name: " << currentItem.name << endl;
-                                        cout << "Price: $" << currentItem.price << endl;
-                                        cout << endl;
-                                        tempCart.pop();
-                                    }
-                                    break;
-                                }
-                                case '4': {
-                                    // Process the order
-                                    if (!orderQueue.isEmpty()) {
-                                        while (!orderQueue.isEmpty()) {
-                                            Order currentOrder = orderQueue.peek();
-                                            orderHistory.insert(&currentOrder);
-                                            currentOrder.orderId = orderHistory.size + 1; // Assign order ID
-                                            processOrder(currentOrder);
-                                            orderQueue.dequeue();
-                                        }
-                                    } else {
-                                        cout << "No orders in the queue." << endl;
-                                    }
-                                    break;
-                                }
-
-                                case '5': {
-                                    string itemName;
-                                    cout << "Enter the name of the food item: ";
-                                    cin >> itemName;
-                                    int itemIndex = searchFoodItem(availableFoodItems, itemName);
-                                    if (itemIndex != -1) {
-                                        cout << "Item found at index: " << itemIndex << endl;
-                                    } else {
-                                        cout << "Item not found." << endl;
-                                    }
-                                    break;
-                                }
-                                case '6': {
-                                    sort(availableFoodItems.begin(), availableFoodItems.end(), compareByPrice);
-                                    cout << "Food items sorted by low price." << endl;
-                                    displayAvailableFoodItems(availableFoodItems);
-                                    break;
-                                }
-                                case '7': {
-                                    sort(availableFoodItems.rbegin(), availableFoodItems.rend(), compareByPrice);
-                                    cout << "Food items sorted by high price." << endl;
-                                    displayAvailableFoodItems(availableFoodItems);
-                                    break;
-                                }
-                                case '8': {
-                                    //orderHistory.displayOrderHistory();
-                                    orderHistory.display<Order>();
-                                    break;
-                                }
-                                case '9': {
-                                    cout << "Logging out..." << endl;
-                                    break;
-                                }
-                                default: {
-                                    cout << "Invalid choice. Please try again." << endl;
-                                    break;
-                                }
-                            }
-                        } while (userChoice != '9');
-                        break;
-                    }
-                }
-
-                if (!userFound) {
-                    cout << "Invalid username or password." << endl;
-                }
-                break;
-            }
-            case '3': {
-                cout << "Exiting..." << endl;
-                break;
-            }
-            default: {
-                cout << "Invalid choice. Please try again." << endl;
-                break;
-            }
-        }
-    } while (choice != '3');
+        handleUserChoice(choice, &user, availableFoodItems, &orderQueue, &orderHistory);
+    } while (choice != '9');
 
     return 0;
 }
+
