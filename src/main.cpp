@@ -2,8 +2,19 @@
 #include <string>
 #include <algorithm>
 #include <random> // Include the random library
+#include <cstdlib> // Include the cstdlib header for the system() function
+#include <iomanip>
 
 using namespace std;
+
+void clearScreen() {
+#ifdef _WIN32
+    system("cls"); // For Windows
+#else
+    system("clear"); // For UNIX-based systems (Linux, macOS)
+#endif
+}
+
 
 template <typename T>
 class Stack {
@@ -200,7 +211,7 @@ bool compareByPrice(const FoodItem& item1, const FoodItem& item2) {
 // Function to add a food item to the cart
 void addToCart(User* user, FoodItem* foodItem) {
     user->cart.push(*foodItem);
-    cout << "Food item added to the cart!" << endl;
+    cout << "-- Food item added to the cart! --" << endl;
 }
 
 // Function to process an order
@@ -224,7 +235,7 @@ void processOrder(User* user, Order order) {
     }
 
     cout << "Total Price: $" << totalPrice << endl;
-    cout << "Order processed successfully!" << endl;
+    cout << "-- Order processed successfully! --" << endl;
 
     user->cart = Stack<FoodItem>(); // Clear the cart
 }
@@ -242,12 +253,17 @@ int generateRandomOrderId() {
 
 // Display the available food items
 void displayAvailableFoodItems(const vector<FoodItem>& foodItems) {
-    cout << "Available Food Items:" << endl;
+    clearScreen(); // Clear the terminal screen
+    cout << ".-----------------------." << endl;
+    cout << "| Available Food Items: |" << endl;
+    cout << "'-----------------------'" << endl;
     for (const auto& foodItem : foodItems) {
-        cout << "ID: " << foodItem.id << endl;
-        cout << "Name: " << foodItem.name << endl;
-        cout << "Price: $" << foodItem.price << endl;
-        cout << endl;
+        cout << "+-----------------------------+" << endl;
+        cout << "| ID    : " << setw(20) << left << foodItem.id << "|" << endl;
+        cout << "| Name  : " << setw(20) << left << foodItem.name << "|" << endl;
+        cout << "| Price : " << setw(20) << left << fixed << setprecision(2) << foodItem.price << "|" << endl;
+        cout << "+-----------------------------+" << endl;
+
     }
 }
 
@@ -277,7 +293,10 @@ void handleUserChoice(char choice, User *user, vector<FoodItem>& availableFoodIt
             displayAvailableFoodItems(availableFoodItems);
             // Prompt the user to select a food item
             int selectedItemId;
-            cout << "Enter the ID of the food item you want to add to the cart: ";
+            cout << "--------------------------------------------" << endl;
+            cout << "Eɴᴛᴇʀ ᴛʜᴇ ғᴏᴏᴅ Food ID ᴛᴏ ᴀᴅᴅ ᴛᴏ ᴛʜᴇ ᴄᴀʀᴛ " << endl;
+            cout << "--------------------------------------------" << endl;
+            cout << "Food ID: ";
             cin >> selectedItemId;
 
             // Find the selected food item in the available food items list
@@ -291,6 +310,7 @@ void handleUserChoice(char choice, User *user, vector<FoodItem>& availableFoodIt
 
             // Add the selected food item to the user's cart
             if (selectedFoodItem != nullptr) {
+                clearScreen(); // Clear the terminal screen
                 addToCart(user, selectedFoodItem);
 
                 // Prompt the user for the quantity
@@ -305,16 +325,22 @@ void handleUserChoice(char choice, User *user, vector<FoodItem>& availableFoodIt
                 order.quantity = quantity;
                 orderQueue->enqueue(order);
 
-                cout << "Order placed successfully!" << endl;
+                cout << "-- Order placed successfully! --" << endl;
             } else {
-                cout << "Invalid food item ID. Please try again." << endl;
+                clearScreen(); // Clear the terminal screen
+                cout << endl << "-- Invalid food item ID. Please try again. --" << endl << endl;
             }
             break;
         }
         case '3': {
+            clearScreen(); // Clear the terminal screen
             cout << "Cart Contents:" << endl;
             // create temp cart var
             Stack<FoodItem> tempCart = user->cart;
+
+            if (tempCart.isEmpty()) {
+                cout << "-- Cart is empty --" << endl;
+            }
 
             while (!tempCart.isEmpty()) {
                 FoodItem currentItem = user->cart.top();
@@ -327,6 +353,7 @@ void handleUserChoice(char choice, User *user, vector<FoodItem>& availableFoodIt
             break;
         }
         case '4': {
+            clearScreen(); // Clear the terminal screen
             if (orderQueue->isEmpty()) {
                 cout << "No orders to process." << endl;
             } else {
@@ -342,6 +369,7 @@ void handleUserChoice(char choice, User *user, vector<FoodItem>& availableFoodIt
             break;
         }
         case '5': {
+            clearScreen(); // Clear the terminal screen
             string itemName;
             cout << "Enter the name of the food item you want to search: ";
             cin.ignore();
@@ -356,12 +384,14 @@ void handleUserChoice(char choice, User *user, vector<FoodItem>& availableFoodIt
             break;
         }
         case '6': {
+            clearScreen(); // Clear the terminal screen
             vector<FoodItem> sortedItems = availableFoodItems;
             sort(sortedItems.begin(), sortedItems.end(), compareByPrice);
             displayAvailableFoodItems(sortedItems);
             break;
         }
         case '7': {
+            clearScreen(); // Clear the terminal screen
             vector<FoodItem> sortedItems = availableFoodItems;
             sort(sortedItems.begin(), sortedItems.end(), compareByPrice);
             reverse(sortedItems.begin(), sortedItems.end());
@@ -369,31 +399,59 @@ void handleUserChoice(char choice, User *user, vector<FoodItem>& availableFoodIt
             break;
         }
         case '8': {
+            clearScreen(); // Clear the terminal screen
             displayOrderHistory(*orderHistory);
             break;
         }
         case '9': {
+            clearScreen(); // Clear the terminal screen
             cout << "Exiting the program. Thank you!" << endl;
             break;
         }
         default:
+            clearScreen(); // Clear the terminal screen
             cout << "Invalid choice. Please try again." << endl;
             break;
     }
 }
 
-void displayMenu() {
-    cout << "=== Selamat Datang di Angkringan Amikom ===" << endl;
-    cout << "1. Display available food items" << endl;
-    cout << "2. Add food item to cart" << endl;
-    cout << "3. Display cart contents" << endl;
-    cout << "4. Process orders" << endl;
-    cout << "5. Search for a food item by name" << endl;
-    cout << "6. Sort food items by price (ascending)" << endl;
-    cout << "7. Sort food items by price (descending)" << endl;
-    cout << "8. Display order history" << endl;
-    cout << "9. Exit" << endl;
-    cout << "Enter your choice: ";
+void displayLogo() {
+    cout << endl << endl;
+    cout << " " << u8"╭━━━╮╱╱╱╱╱╭╮╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╭━━━╮╱╱╱╭╮" << endl;
+    cout << " " << u8"┃╭━╮┃╱╱╱╱╱┃┃╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱┃╭━╮┃╱╱╱┃┃" << endl;
+    cout << " " << u8"┃┃╱┃┣━╮╭━━┫┃╭┳━┳┳━╮╭━━┳━━┳━╮╱┃┃╱┃┣╮╭┳┫┃╭┳━━┳╮╭╮" << endl;
+    cout << " " << u8"┃╰━╯┃╭╮┫╭╮┃╰╯┫╭╋┫╭╮┫╭╮┃╭╮┃╭╮╮┃╰━╯┃╰╯┣┫╰╯┫╭╮┃╰╯┃" << endl;
+    cout << " " << u8"┃╭━╮┃┃┃┃╰╯┃╭╮┫┃┃┃┃┃┃╰╯┃╭╮┃┃┃┃┃╭━╮┃┃┃┃┃╭╮┫╰╯┃┃┃┃" << endl;
+    cout << " " << u8"╰╯╱╰┻╯╰┻━╮┣╯╰┻╯╰┻╯╰┻━╮┣╯╰┻╯╰╯╰╯╱╰┻┻┻┻┻╯╰┻━━┻┻┻╯" << endl;
+    cout << " " << u8"╱╱╱╱╱╱╱╭━╯┃╱╱╱╱╱╱╱╱╭━╯┃" << std::endl;
+    cout << " " << u8"╱╱╱╱╱╱╱╰━━╯╱╱╱╱╱╱╱╱╰━━╯" << std::endl;
+    cout << endl << endl;
+}
+
+void printMenu() {
+    cout << "=================================================" << endl;
+    cout << "\tWelcome to the Food Delivery System!" << endl;
+    cout << "-------------------------------------------------" << endl;
+    cout << "\t1. Display available food items" << endl;
+    cout << "-------------------------------------------------" << endl;
+    cout << "\t2. Add food item to cart" << endl;
+    cout << "-------------------------------------------------" << endl;
+    cout << "\t3. Display cart contents" << endl;
+    cout << "-------------------------------------------------" << endl;
+    cout << "\t4. Process orders" << endl;
+    cout << "-------------------------------------------------" << endl;
+    cout << "\t5. Search for a food item by name" << endl;
+    cout << "-------------------------------------------------" << endl;
+    cout << "\t6. Sort food items by lower price" << endl;
+    cout << "-------------------------------------------------" << endl;
+    cout << "\t7. Sort food items by higher price" << endl;
+    cout << "-------------------------------------------------" << endl;
+    cout << "\t8. Display order history" << endl;
+    cout << "-------------------------------------------------" << endl;
+    cout << "\t9. Exit" << endl;
+    cout << "-------------------------------------------------" << endl;
+    cout << endl << endl;
+    cout << "Ｅｎｔｅｒ Ｙｏｕｒ Ｃｈｏｉｃｅ :  ";
 }
 
 void initializeVariables(User& user, vector<FoodItem>& availableFoodItems, Queue<Order>& orderQueue, OrderHistory& orderHistory) {
@@ -416,19 +474,24 @@ void initializeVariables(User& user, vector<FoodItem>& availableFoodItems, Queue
 
 
 int main() {
+
     User user;
     vector<FoodItem> availableFoodItems;
     Queue<Order> orderQueue;
     OrderHistory orderHistory;
 
     initializeVariables(user, availableFoodItems, orderQueue, orderHistory);
+    displayLogo();
 
     // Menu loop
     char choice;
     do {
-        displayMenu();
+
+        printMenu();
         cin >> choice;
+        cout << endl;
         handleUserChoice(choice, &user, availableFoodItems, &orderQueue, &orderHistory);
+
     } while (choice != '9');
 
     return 0;
