@@ -146,6 +146,7 @@ struct User {
 // Struct to represent an order
 struct Order {
     int orderId, quantity;
+    double totalPrice;
     User user;
 };
 
@@ -183,9 +184,18 @@ public:
             cout << "Order History:" << endl;
             OrderNode* currentNode = head;
             while (currentNode != nullptr) {
+
+                cout << "+-----------------------------+" << endl;
+                cout << "| ORDER ID      : " << setw(17) << left << currentNode->order.orderId  << " |" << endl;
+                cout << "| Username     : " << setw(17) << left << currentNode->order.user.username << " |" << endl;
+                cout << "| Price    : $" << setw(16) << fixed << setprecision(2) << left << currentNode->order.totalPrice << " |" << endl;
+                cout << "| Quantity : " << setw(17) << left << order.quantity << " |" << endl;
+                cout << "+-----------------------------+" << endl;
+
                 cout << "Order ID: " << currentNode->order.orderId << endl;
                 cout << "Username: " << currentNode->order.user.username << endl;
                 cout << "Quantity: " << currentNode->order.quantity << endl;
+                cout << "Price: $" << fixed << setprecision(2) << currentNode->o << endl;
                 cout << endl;
                 currentNode = currentNode->next;
             }
@@ -203,7 +213,7 @@ public:
 };
 
 
-// Comparator function for sorting food items by price in ascending order
+// Comparator function for sorting food items by totalPrice in ascending order
 bool compareByPrice(const FoodItem& item1, const FoodItem& item2) {
     return item1.price < item2.price;
 }
@@ -219,23 +229,27 @@ void addToCart(User* user, FoodItem& foodItem) {
 void processOrder(User* user, Order order) {
     cout << "Processing Order ID: " << order.orderId << endl;
     cout << "Username: " << order.user.username << endl;
-    cout << "Password: " << order.user.password << endl;
 
     // Process the items in the cart
     double totalPrice = 0.0;
     cout << "Cart Contents:" << endl;
     while (!order.user.cart.isEmpty()) {
         FoodItem currentItem = order.user.cart.top();
-        cout << "ID: " << currentItem.id << endl;
-        cout << "Name: " << currentItem.name << endl;
-        cout << "Price: $" << currentItem.price << endl;
-        cout << "Quantity: " << order.quantity << endl;
+
+        cout << "+-----------------------------+" << endl;
+        cout << "| ID       : " << setw(17) << left << currentItem.id << " |" << endl;
+        cout << "| Name     : " << setw(17) << left << currentItem.name << " |" << endl;
+        cout << "| Price    : $" << setw(16) << fixed << setprecision(2) << left << currentItem.price << " |" << endl;
+        cout << "| Quantity : " << setw(17) << left << order.quantity << " |" << endl;
+        cout << "+-----------------------------+" << endl;
+
         totalPrice += (currentItem.price * order.quantity);
+        order.totalPrice = totalPrice;
         cout << endl;
         order.user.cart.pop();
     }
 
-    cout << "Total Price: $" << totalPrice << endl;
+    cout << "Total Price: $" << totalPrice << endl << endl;
     cout << "-- Order processed successfully! --" << endl;
 
     user->cart = Stack<FoodItem>(); // Clear the cart
@@ -406,12 +420,12 @@ void handleUserChoice(char choice, User *user, vector<FoodItem>& availableFoodIt
         }
         case '9': {
             clearScreen(); // Clear the terminal screen
-            cout << "Exiting the program. Thank you!" << endl;
+            cout << "-- Exiting the program. Thank you! --" << endl;
             break;
         }
         default:
             clearScreen(); // Clear the terminal screen
-            cout << "Invalid choice. Please try again." << endl;
+            cout << "-- Invalid choice. Please try again. --" << endl;
             break;
     }
 }
@@ -424,8 +438,8 @@ void displayLogo() {
     cout << " " << u8"┃╰━╯┃╭╮┫╭╮┃╰╯┫╭╋┫╭╮┫╭╮┃╭╮┃╭╮╮┃╰━╯┃╰╯┣┫╰╯┫╭╮┃╰╯┃" << endl;
     cout << " " << u8"┃╭━╮┃┃┃┃╰╯┃╭╮┫┃┃┃┃┃┃╰╯┃╭╮┃┃┃┃┃╭━╮┃┃┃┃┃╭╮┫╰╯┃┃┃┃" << endl;
     cout << " " << u8"╰╯╱╰┻╯╰┻━╮┣╯╰┻╯╰┻╯╰┻━╮┣╯╰┻╯╰╯╰╯╱╰┻┻┻┻┻╯╰┻━━┻┻┻╯" << endl;
-    cout << " " << u8"╱╱╱╱╱╱╱╭━╯┃╱╱╱╱╱╱╱╱╭━╯┃" << std::endl;
-    cout << " " << u8"╱╱╱╱╱╱╱╰━━╯╱╱╱╱╱╱╱╱╰━━╯" << std::endl;
+    cout << " " << u8"╱╱╱╱╱╱╱╭━╯┃╱╱╱╱╱╱╱╱╭━╯┃" << endl;
+    cout << " " << u8"╱╱╱╱╱╱╱╰━━╯╱╱╱╱╱╱╱╱╰━━╯" << endl;
     cout << endl << endl;
 }
 
@@ -443,9 +457,9 @@ void printMenu() {
     cout << "-------------------------------------------------" << endl;
     cout << "\t5. Search for a food item by name" << endl;
     cout << "-------------------------------------------------" << endl;
-    cout << "\t6. Sort food items by lower price" << endl;
+    cout << "\t6. Sort food items by lower totalPrice" << endl;
     cout << "-------------------------------------------------" << endl;
-    cout << "\t7. Sort food items by higher price" << endl;
+    cout << "\t7. Sort food items by higher totalPrice" << endl;
     cout << "-------------------------------------------------" << endl;
     cout << "\t8. Display order history" << endl;
     cout << "-------------------------------------------------" << endl;
