@@ -209,8 +209,9 @@ bool compareByPrice(const FoodItem& item1, const FoodItem& item2) {
 }
 
 // Function to add a food item to the cart
-void addToCart(User* user, FoodItem* foodItem) {
-    user->cart.push(*foodItem);
+void addToCart(User* user, FoodItem& foodItem) {
+    FoodItem newItem = foodItem;  // Create a copy of the FoodItem object
+    user->cart.push(newItem);     // Push the new item to the cart
     cout << "-- Food item added to the cart! --" << endl;
 }
 
@@ -311,7 +312,7 @@ void handleUserChoice(char choice, User *user, vector<FoodItem>& availableFoodIt
             // Add the selected food item to the user's cart
             if (selectedFoodItem != nullptr) {
                 clearScreen(); // Clear the terminal screen
-                addToCart(user, selectedFoodItem);
+                addToCart(user, *selectedFoodItem);
 
                 // Prompt the user for the quantity
                 int quantity;
@@ -343,7 +344,7 @@ void handleUserChoice(char choice, User *user, vector<FoodItem>& availableFoodIt
             }
 
             while (!tempCart.isEmpty()) {
-                FoodItem currentItem = user->cart.top();
+                FoodItem currentItem = tempCart.top();  // Use tempCart instead of user->cart
                 cout << "ID: " << currentItem.id << endl;
                 cout << "Name: " << currentItem.name << endl;
                 cout << "Price: $" << currentItem.price << endl;
