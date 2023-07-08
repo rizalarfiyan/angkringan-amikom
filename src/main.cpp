@@ -1,220 +1,29 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
-#include <random> // Include the random library
-#include <cstdlib> // Include the cstdlib header for the system() function
 #include <iomanip>
+
+#include "models.h"
+#include "utils.h"
+#include "services/stack.h"
+#include "services/queue.h"
+#include "services/linkedlist.h"
+#include "services/sort.h"
+#include "services/search.h"
 
 using namespace std;
 
-void clearScreen() {
-#ifdef _WIN32
-    system("cls"); // For Windows
-#else
-    system("clear"); // For UNIX-based systems (Linux, macOS)
-#endif
+// Callback function for searching in FoodItem by name
+string searchField(const FoodItem& item) {
+    return item.name;
 }
 
-
-template <typename T>
-class Stack {
-private:
-    vector<T> stack;
-
-public:
-    // Check if the stack is empty
-    bool isEmpty() const {
-        return stack.empty();
-    }
-
-    // Push an element onto the stack
-    void push(const T& element) {
-        stack.push_back(element);
-    }
-
-    // Remove and return the top element from the stack
-    T pop() {
-        if (isEmpty()) {
-            throw out_of_range("Stack is empty");
-        }
-
-        T topElement = stack.back();
-        stack.pop_back();
-        return topElement;
-    }
-
-    // Return the top element of the stack without removing it
-    T& top() {
-        if (isEmpty()) {
-            throw out_of_range("Stack is empty");
-        }
-
-        return stack.back();
-    }
-
-    // Return the size of the stack
-    size_t size() const {
-        return stack.size();
-    }
-};
-
-template <typename T>
-struct Queue {
-private:
-    struct Node {
-        T data;
-        Node* next;
-        Node(const T& value) : data(value), next(nullptr) {}
-    };
-
-    Node* front;
-    Node* rear;
-
-public:
-    Queue() : front(nullptr), rear(nullptr) {}
-
-    bool isEmpty() {
-        return front == nullptr;
-    }
-
-    void display() {
-        if (isEmpty()) {
-            cout << "Queue is empty." << endl;
-            return;
-        }
-
-        cout << "Elements in the queue: ";
-        Node* current = front;
-        while (current != nullptr) {
-            cout << current->data << " ";
-            current = current->next;
-        }
-        cout << endl;
-    }
-
-    void enqueue(const T& element) {
-        Node* newNode = new Node(element);
-
-        if (isEmpty()) {
-            front = rear = newNode;
-        } else {
-            rear->next = newNode;
-            rear = newNode;
-        }
-    }
-
-    void dequeue() {
-        if (isEmpty()) {
-            cout << "Queue is empty. Cannot dequeue." << endl;
-            return;
-        }
-
-        Node* temp = front;
-        front = front->next;
-
-        delete temp;
-
-        if (isEmpty()) {
-            rear = nullptr;
-        }
-    }
-
-    T peek() {
-        if (isEmpty()) {
-            cout << "Queue is empty. No element to peek." << endl;
-            return T();
-        }
-
-        return front->data;
-    }
-};
-
-// Struct to represent a food item
-struct FoodItem {
-    int id;
-    string name;
-    double price;
-};
-
-// Struct to represent a user
-struct User {
-    string username;
-    string password;
-    Stack<FoodItem> cart;
-};
-
-// Struct to represent an order
-struct Order {
-    int orderId, quantity;
-    double totalPrice;
-    User user;
-};
-
-// Node struct for the linked list
-struct OrderNode {
-    Order order;
-    OrderNode* next;
-
-    OrderNode(const Order& order) : order(order), next(nullptr) {}
-};
-
-// Linked list to store order history
-class OrderHistory {
-private:
-    OrderNode* head;
-    OrderNode* tail;
-
-public:
-    OrderHistory() : head(nullptr), tail(nullptr) {}
-
-    void addOrder(const Order& order) {
-        OrderNode* newNode = new OrderNode(order);
-        if (head == nullptr) {
-            head = tail = newNode;
-        } else {
-            tail->next = newNode;
-            tail = newNode;
-        }
-    }
-
-    void displayOrderHistory() const {
-        if (head == nullptr) {
-            cout << "Order history is empty." << endl;
-        } else {
-            cout << "Order History:" << endl;
-            OrderNode* currentNode = head;
-            while (currentNode != nullptr) {
-
-                cout << "+-----------------------------+" << endl;
-                cout << "| ORDER ID      : " << setw(17) << left << currentNode->order.orderId  << " |" << endl;
-                cout << "| Username     : " << setw(17) << left << currentNode->order.user.username << " |" << endl;
-                cout << "| Price    : $" << setw(16) << fixed << setprecision(2) << left << currentNode->order.totalPrice << " |" << endl;
-                cout << "| Quantity : " << setw(17) << left << currentNode->order.quantity << " |" << endl;
-                cout << "+-----------------------------+" << endl;
-
-                cout << "Order ID: " << currentNode->order.orderId << endl;
-                cout << "Username: " << currentNode->order.user.username << endl;
-                cout << "Quantity: " << currentNode->order.quantity << endl;
-                cout << "Price: $" << fixed << setprecision(2) << currentNode->order.totalPrice << endl;
-                cout << endl;
-                currentNode = currentNode->next;
-            }
-        }
-    }
-
-    ~OrderHistory() {
-        OrderNode* currentNode = head;
-        while (currentNode != nullptr) {
-            OrderNode* nextNode = currentNode->next;
-            delete currentNode;
-            currentNode = nextNode;
-        }
-    }
-};
-
-
 // Comparator function for sorting food items by totalPrice in ascending order
-bool compareByPrice(const FoodItem& item1, const FoodItem& item2) {
+bool compareByPriceASC(const FoodItem& item1, const FoodItem& item2) {
+    return item1.price > item2.price;
+}
+
+bool compareByPriceDESC(const FoodItem& item1, const FoodItem& item2) {
     return item1.price < item2.price;
 }
 
@@ -256,19 +65,9 @@ void processOrder(User* user, Order order) {
 }
 
 
-
-// Function to generate a random order ID
-int generateRandomOrderId() {
-    random_device rd; // Obtain a random seed from the operating system
-    mt19937 gen(rd()); // Initialize the random number generator
-    uniform_int_distribution<> dis(1000, 9999); // Define the range of order IDs
-    return dis(gen); // Generate a random order ID
-}
-
-
 // Display the available food items
 void displayAvailableFoodItems(const vector<FoodItem>& foodItems) {
-    clearScreen(); // Clear the terminal screen
+    clearScreen();
     cout << ".-----------------------." << endl;
     cout << "| Available Food Items: |" << endl;
     cout << "'-----------------------'" << endl;
@@ -285,16 +84,6 @@ void displayAvailableFoodItems(const vector<FoodItem>& foodItems) {
 // Display the order history
 void displayOrderHistory(const OrderHistory& orderHistory) {
     orderHistory.displayOrderHistory();
-}
-
-// Function to search for a food item by name
-int searchFoodItem(const vector<FoodItem>& foodItems, const string& itemName) {
-    for (size_t i = 0; i < foodItems.size(); ++i) {
-        if (foodItems[i].name == itemName) {
-            return static_cast<int>(i);
-        }
-    }
-    return -1; // Return -1 if the item is not found
 }
 
 // Function to handle user's choice
@@ -325,7 +114,7 @@ void handleUserChoice(char choice, User *user, vector<FoodItem>& availableFoodIt
 
             // Add the selected food item to the user's cart
             if (selectedFoodItem != nullptr) {
-                clearScreen(); // Clear the terminal screen
+                clearScreen();
                 addToCart(user, *selectedFoodItem);
 
                 // Prompt the user for the quantity
@@ -342,13 +131,13 @@ void handleUserChoice(char choice, User *user, vector<FoodItem>& availableFoodIt
 
                 cout << "-- Order placed successfully! --" << endl;
             } else {
-                clearScreen(); // Clear the terminal screen
+                clearScreen();
                 cout << endl << "-- Invalid food item ID. Please try again. --" << endl << endl;
             }
             break;
         }
         case '3': {
-            clearScreen(); // Clear the terminal screen
+            clearScreen();
             cout << "Cart Contents:" << endl;
             // create temp cart var
             Stack<FoodItem> tempCart = user->cart;
@@ -368,7 +157,7 @@ void handleUserChoice(char choice, User *user, vector<FoodItem>& availableFoodIt
             break;
         }
         case '4': {
-            clearScreen(); // Clear the terminal screen
+            clearScreen();
             if (orderQueue->isEmpty()) {
                 cout << "No orders to process." << endl;
             } else {
@@ -384,47 +173,46 @@ void handleUserChoice(char choice, User *user, vector<FoodItem>& availableFoodIt
             break;
         }
         case '5': {
-            clearScreen(); // Clear the terminal screen
+            clearScreen();
             string itemName;
             cout << "Enter the name of the food item you want to search: ";
             cin.ignore();
             getline(cin, itemName);
 
-            int index = searchFoodItem(availableFoodItems, itemName);
-            if (index != -1) {
-                cout << "Food item found at index " << index << "." << endl;
-            } else {
-                cout << "Food item not found." << endl;
-            }
+			vector<FoodItem> results = Search<FoodItem>::fuzzy(availableFoodItems, searchField, itemName);
+
+			for (const auto& result : results) {
+				cout << "ID: " << result.id << ", Name: " << result.name << ", Price: " << result.price << endl;
+			}
             break;
         }
         case '6': {
-            clearScreen(); // Clear the terminal screen
+            clearScreen();
             vector<FoodItem> sortedItems = availableFoodItems;
-            sort(sortedItems.begin(), sortedItems.end(), compareByPrice);
+			Sort<FoodItem>::bubble(sortedItems, compareByPriceASC);
             displayAvailableFoodItems(sortedItems);
             break;
         }
         case '7': {
-            clearScreen(); // Clear the terminal screen
+            clearScreen();
             vector<FoodItem> sortedItems = availableFoodItems;
-            sort(sortedItems.begin(), sortedItems.end(), compareByPrice);
-            reverse(sortedItems.begin(), sortedItems.end());
+			Sort<FoodItem>::bubble(sortedItems, compareByPriceDESC);
             displayAvailableFoodItems(sortedItems);
             break;
         }
         case '8': {
-            clearScreen(); // Clear the terminal screen
+            clearScreen();
             displayOrderHistory(*orderHistory);
+			// orderHistory->displayOrderHistory();
             break;
         }
         case '9': {
-            clearScreen(); // Clear the terminal screen
+            clearScreen();
             cout << "-- Exiting the program. Thank you! --" << endl;
             break;
         }
         default:
-            clearScreen(); // Clear the terminal screen
+            clearScreen();
             cout << "-- Invalid choice. Please try again. --" << endl;
             break;
     }
@@ -457,9 +245,9 @@ void printMenu() {
     cout << "-------------------------------------------------" << endl;
     cout << "\t5. Search for a food item by name" << endl;
     cout << "-------------------------------------------------" << endl;
-    cout << "\t6. Sort food items by lower totalPrice" << endl;
+    cout << "\t6. Sort food items by lower" << endl;
     cout << "-------------------------------------------------" << endl;
-    cout << "\t7. Sort food items by higher totalPrice" << endl;
+    cout << "\t7. Sort food items by higher" << endl;
     cout << "-------------------------------------------------" << endl;
     cout << "\t8. Display order history" << endl;
     cout << "-------------------------------------------------" << endl;
@@ -475,7 +263,7 @@ void initializeVariables(User& user, vector<FoodItem>& availableFoodItems, Queue
     user.password = "password123";
 
     // Initialize the available food items
-    FoodItem foodItem1 = {1, "Burger", 5.99};
+    FoodItem foodItem1 = {1, "Burager", 5.99};
     FoodItem foodItem2 = {2, "Pizza", 8.99};
 
     // Add the food items to the vector
