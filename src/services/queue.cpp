@@ -46,21 +46,3 @@ T Queue<T>::peek() {
 
     return front->data;
 }
-
-template <typename T>
-bool Queue<T>::isLast() {
-	if (isEmpty()) {
-		return false;
-	}
-
-	Node* current = front;
-	while (current != nullptr) {
-		if (current == rear) {
-			return true;
-		} else {
-			return false;
-		}
-		current = current->next;
-	}
-	return false;
-}

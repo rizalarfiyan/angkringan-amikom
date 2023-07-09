@@ -20,3 +20,19 @@ int generateRandomOrderId() {
     // Generate a random order ID
     return dis(gen);
 }
+
+string formatCurrency(double price) {
+    stringstream stream;
+
+	//* view avaliable locale in /etc/locale.gen
+    stream.imbue(locale(u8"id_ID.UTF8"));
+    stream << fixed << setprecision(2) << price;
+    
+    string formattedPrice = stream.str();
+    size_t decimalPos = formattedPrice.find(".");
+    if (decimalPos != string::npos) {
+        formattedPrice.replace(decimalPos, 1, ".");
+    }
+
+    return "Rp " + formattedPrice;
+}

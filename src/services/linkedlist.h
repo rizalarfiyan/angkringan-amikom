@@ -3,7 +3,9 @@
 
 #include <iostream>
 #include <iomanip>
+#include <string>
 #include "../models.h"
+#include "../utils.h"
 using namespace std;
 
 class OrderHistory {

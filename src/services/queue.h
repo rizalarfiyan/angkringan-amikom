@@ -22,7 +22,6 @@ public:
     void enqueue(const T& element);
     void dequeue();
     T peek();
-    bool isLast();
 };
 
 #include "queue.cpp"

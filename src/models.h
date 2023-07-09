@@ -9,6 +9,8 @@ struct FoodItem {
     int id;
     string name;
     double price;
+
+	int quantity;
 };
 
 struct User {
@@ -18,8 +20,9 @@ struct User {
 };
 
 struct Order {
-    int orderId, quantity;
+    int orderId;
     double totalPrice;
+	Stack<FoodItem> items;
     User user;
 };
 

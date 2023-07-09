@@ -14,26 +14,33 @@ void OrderHistory::addOrder(const Order& order) {
 
 void OrderHistory::displayOrderHistory() const {
     if (head == nullptr) {
-        cout << "Order history is empty." << endl;
-    } else {
-        cout << "Order History:" << endl;
-        OrderNode* currentNode = head;
-        while (currentNode != nullptr) {
-            cout << "+-----------------------------+" << endl;
-            cout << "| ORDER ID      : " << setw(17) << left << currentNode->order.orderId  << " |" << endl;
-            cout << "| Username     : " << setw(17) << left << currentNode->order.user.username << " |" << endl;
-            cout << "| Price    : $" << setw(16) << fixed << setprecision(2) << left << currentNode->order.totalPrice << " |" << endl;
-            cout << "| Quantity : " << setw(17) << left << currentNode->order.quantity << " |" << endl;
-            cout << "+-----------------------------+" << endl;
-            
-            cout << "Order ID: " << currentNode->order.orderId << endl;
-            cout << "Username: " << currentNode->order.user.username << endl;
-            cout << "Quantity: " << currentNode->order.quantity << endl;
-            cout << "Price: $" << fixed << setprecision(2) << currentNode->order.totalPrice << endl;
-            cout << endl;
-            currentNode = currentNode->next;
-        }
+		cout << "+------------------------------------------------+" << endl;
+		cout << "|             Order history is empty!            |" << endl;
+		cout << "+------------------------------------------------+" << endl;
+		return;
     }
+
+	cout << "+------------------------------------------------+" << endl;
+	cout << "|                 Order history:                 |" << endl;
+	cout << "+------------------------------------------------+" << endl;
+	OrderNode* currentNode = head;
+	while (currentNode != nullptr) {
+		cout << "+------------------------------------------------+" << endl;
+		cout << "| Order ID : " << setw(36) << left << currentNode->order.orderId << "|" << endl;
+		cout << "| Username : " << setw(36) << left << currentNode->order.user.username << "|" << endl;
+		cout << "| Price    : " << setw(36) << left << formatCurrency(currentNode->order.totalPrice) << "|" << endl;
+
+		cout << "| Items    : " << setw(36) << left << " " << "|" << endl;
+		while (!currentNode->order.items.isEmpty()) {
+			FoodItem currentItem = currentNode->order.items.top();
+			string itemName = currentItem.name + " (x" + to_string(currentItem.quantity) + ")";
+			cout << "|    - " << setw(42) << left << itemName << "|" << endl;
+			currentNode->order.items.pop();
+		}
+
+		cout << "+------------------------------------------------+" << endl;
+		currentNode = currentNode->next;
+	}
 }
 
 OrderHistory::~OrderHistory() {

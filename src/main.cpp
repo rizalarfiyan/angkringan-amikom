@@ -73,7 +73,9 @@ class Action {
 		}
 
         void printThankYou() {
-            cout << "-- Exiting the program. Thank you! --" << endl;
+			cout << "+------------------------------------------------+" << endl;
+			cout << "|        Exiting the program. Thank you!         |" << endl;
+			cout << "+------------------------------------------------+" << endl;
         }
 
         void printInvalidChoice() {
@@ -127,7 +129,7 @@ class Action {
 
 		void printTotalPrice(double total) {
 			cout << "+------------------------------------------------+" << endl;
-			cout << "| Total    : $" << setw(35) << left << fixed << setprecision(2) << total << "|" << endl;
+			cout << "| Total    : " << setw(36) << left << formatCurrency(total) << "|" << endl;
 			cout << "+------------------------------------------------+" << endl;
 		}
 
@@ -136,10 +138,11 @@ class Action {
             cout << "| ID       : " << setw(36) << left << menu.id << "|" << endl;
             cout << "| Name     : " << setw(36) << left << menu.name << "|" << endl;
             if (quantity != nullptr) {
-				cout << "| Price    : $" << setw(35) << left << fixed << setprecision(2) << (menu.price * *quantity) << "|" << endl;
-				cout << "| Quantity : " << setw(36) << left << *quantity << "|" << endl;
+				string quantityStr = to_string(*quantity) + " x (" + formatCurrency(menu.price) + ")"; 
+				cout << "| Price    : " << setw(36) << left << formatCurrency(menu.price * *quantity) << "|" << endl;
+				cout << "| Quantity : " << setw(36) << left << quantityStr << "|" << endl;
 			} else {
-				cout << "| Price    : $" << setw(35) << left << fixed << setprecision(2) << menu.price << "|" << endl;
+				cout << "| Price    : " << setw(36) << left << formatCurrency(menu.price) << "|" << endl;
 			}
             cout << "+------------------------------------------------+" << endl;
 		}
@@ -201,11 +204,13 @@ class Action {
                 }
                 case '4': {
                     clearScreen();
+					this->printLogo();
                     this->processOrders();
                     break;
                 }
                 case '5': {
                     clearScreen();
+					this->printLogo();
                     string itemName = this->inputSearch();
                     vector<FoodItem> results = Search<FoodItem>::fuzzy(menus, searchField, itemName);
                     this->printFoodMenus(results);
@@ -213,6 +218,7 @@ class Action {
                 }
                 case '6': {
                     clearScreen();
+					this->printLogo();
                     vector<FoodItem> sortedItems = menus;
                     Sort<FoodItem>::bubble(menus, compareByPriceASC);
                     this->printFoodMenus(sortedItems);
@@ -220,6 +226,7 @@ class Action {
                 }
                 case '7': {
                     clearScreen();
+					this->printLogo();
                     vector<FoodItem> sortedItems = menus;
                     Sort<FoodItem>::bubble(sortedItems, compareByPriceDESC);
                     this->printFoodMenus(sortedItems);
@@ -227,17 +234,21 @@ class Action {
                 }
                 case '8': {
                     clearScreen();
+					this->printLogo();
                     orderHistory.displayOrderHistory();
                     break;
                 }
                 case '9': {
                     clearScreen();
+					this->printLogo();
                     this->printThankYou();
                     break;
                 }
                 default:
                     clearScreen();
+					this->printLogo();
                     this->printInvalidChoice();
+					this->printMenu();
                     break;
             }
 		}
@@ -246,9 +257,9 @@ class Action {
             int selectedFoodId = this->inputSelectedFoodId();
             FoodItem* selectedFoodItem = this->checkValidFoodId(selectedFoodId);
             if (selectedFoodItem != nullptr) {
-                this->addToCart(*selectedFoodItem);
                 int quantity = this->inputQuantity();
-                this->createOrderHistory(quantity);
+				selectedFoodItem->quantity = quantity;
+                this->addToCart(*selectedFoodItem);
                 clearScreen();
 				this->printLogo();
                 this->printOrderSuccess();
@@ -287,35 +298,29 @@ class Action {
             return quantity;
         }
 
-        void createOrderHistory(int quantity) {
-            Order order;
-             // Temporary order ID, will be assigned later
-            order.orderId = -1;
-            order.user = this->user;
-            order.quantity = quantity;
-            this->orderQueue.enqueue(order);
-        }
-
 		void addToCart(FoodItem& foodItem) {
 			FoodItem newItem = foodItem;
 			user.cart.push(newItem);
 		}
 
-		void cartContents() {
+		double cartContents() {
 			Stack<FoodItem> tempCart = user.cart;
+			double totalPrice = 0.0;
 
 			if (tempCart.isEmpty()) {
                 this->printEmptyCart();
-                return;
+                return totalPrice;
 			}
 
 			this->printCartContents();
 			while (!tempCart.isEmpty()) {
 				FoodItem currentItem = tempCart.top();
-                //! fixme later
-                this->printFoodMenuItem(currentItem);
+				totalPrice += (currentItem.price * currentItem.quantity);
+                this->printFoodMenuItem(currentItem, &currentItem.quantity);
 				tempCart.pop();
 			}
+			this->printTotalPrice(totalPrice);
+            return totalPrice;
 		}
 
 		string inputSearch() {
@@ -327,46 +332,31 @@ class Action {
 		}
 
 		void processOrders() {
+			Order order;
+			order.orderId = generateRandomOrderId();
+			order.user = this->user;
+			order.items = this->user.cart;
+
+			this->printInfo(order);
+            double totalPrice = this->cartContents();		
+			order.totalPrice = totalPrice;
+			this->orderQueue.enqueue(order);
+
+			this->startQueue();
+		}
+
+		void startQueue() {
 			if (this->orderQueue.isEmpty()) {
 				this->printLogo();
 				this->printNoOrderProcess();
 			} else {
 				while (!this->orderQueue.isEmpty()) {
 					Order currentOrder = this->orderQueue.peek();
-					currentOrder.orderId = generateRandomOrderId();
-					orderHistory.addOrder(currentOrder);
-					bool isLast = this->orderQueue.isLast();
-					this->processOrder(currentOrder, isLast);
+					this->orderHistory.addOrder(currentOrder);
 					this->orderQueue.dequeue();
 				}
-
-			}
-		}
-
-		void processOrder(Order order, bool isLast) {
-			if (isLast) {
-				this->printInfo(order);
-				this->printCartContents();
-			}
-
-			// Process the items in the cart
-			double totalPrice = 0.0;
-			while (!order.user.cart.isEmpty()) {
-				FoodItem currentItem = order.user.cart.top();
-				if (isLast) {
-					this->printFoodMenuItem(currentItem, &order.quantity);
-				}
-				totalPrice += (currentItem.price * order.quantity);
-				order.totalPrice = totalPrice;
-				order.user.cart.pop();
-			}
-
-			if (isLast) {
-				this->printTotalPrice(totalPrice);
 				this->printOrderProcessed();
 			}
-
-			user.cart = Stack<FoodItem>();
 		}
 };
 
@@ -374,19 +364,31 @@ int main() {
     clearScreen();
 
     User user = {
-		"admin",
-		"passsword"
+		username: "admin",
+		password: "passsword"
 	};
 
     vector<FoodItem> availableFoodItems{
-		{1, "Burger", 5.99},
-		{2, "Pizza", 8.99},
-		{3, "Es Teh", 8.99},
-		{4, "Es Jeruk", 8.99},
-		{5, "Kerupuk", 8.99},
-		{6, "Nasi", 8.99},
-		{7, "Sayur", 8.99},
-		{8, "Sambal", 8.99},
+		{1, "Nasi Goreng", 20000},
+		{2, "Sate Ayam", 15000},
+		{3, "Gado-gado", 18000},
+		{4, "Rendang", 35000},
+		{5, "Soto Ayam", 25000},
+		{6, "Nasi Padang", 30000},
+		{7, "Sambal Goreng Tempe", 12000},
+		{8, "Bakso", 10000},
+		{9, "Mie Ayam", 15000},
+		{10, "Ayam Goreng", 20000},
+		{11, "Teh Tarik", 8000},
+		{12, "Es Teh Manis", 5000},
+		{13, "Jus Jeruk", 10000},
+		{14, "Es Kelapa Muda", 15000},
+		{15, "Kopi Tubruk", 10000},
+		{16, "Wedang Jahe", 8000},
+		{17, "Es Campur", 12000},
+		{18, "Es Teler", 15000},
+		{19, "Bajigur", 10000},
+		{20, "Es Cendol", 10000},
 	};
 
 	Action action = Action(user, availableFoodItems);
