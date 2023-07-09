@@ -19,10 +19,10 @@ private:
 public:
     Queue();
     bool isEmpty();
-    void display();
     void enqueue(const T& element);
     void dequeue();
     T peek();
+    bool isLast();
 };
 
 #include "queue.cpp"

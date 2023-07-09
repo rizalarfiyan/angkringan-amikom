@@ -9,22 +9,6 @@ bool Queue<T>::isEmpty() {
 }
 
 template <typename T>
-void Queue<T>::display() {
-    if (isEmpty()) {
-        cout << "Queue is empty." << endl;
-        return;
-    }
-
-    cout << "Elements in the queue: ";
-    Node* current = front;
-    while (current != nullptr) {
-        cout << current->data << " ";
-        current = current->next;
-    }
-    cout << endl;
-}
-
-template <typename T>
 void Queue<T>::enqueue(const T& element) {
     Node* newNode = new Node(element);
 
@@ -61,4 +45,22 @@ T Queue<T>::peek() {
     }
 
     return front->data;
+}
+
+template <typename T>
+bool Queue<T>::isLast() {
+	if (isEmpty()) {
+		return false;
+	}
+
+	Node* current = front;
+	while (current != nullptr) {
+		if (current == rear) {
+			return true;
+		} else {
+			return false;
+		}
+		current = current->next;
+	}
+	return false;
 }

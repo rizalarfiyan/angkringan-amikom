@@ -13,289 +13,384 @@
 
 using namespace std;
 
-// Callback function for searching in FoodItem by name
-string searchField(const FoodItem& item) {
-    return item.name;
-}
+class Action {
+	private:	
+		User user;
+		vector<FoodItem> menus;
+		Queue<Order> orderQueue;
+		OrderHistory orderHistory;
+		char choice;
+	public:
+		Action(User user, vector<FoodItem> menus) {
+			this->user = user;
+			this->menus = menus;
+			this->orderQueue = Queue<Order>();
+			this->orderHistory = OrderHistory();
+		};
 
-// Comparator function for sorting food items by totalPrice in ascending order
-bool compareByPriceASC(const FoodItem& item1, const FoodItem& item2) {
-    return item1.price > item2.price;
-}
+		void run() {
+			this->printLogo();
+			this->choiceAction();
+		};
 
-bool compareByPriceDESC(const FoodItem& item1, const FoodItem& item2) {
-    return item1.price < item2.price;
-}
+		void printLogo() {
+			cout << endl;
+			cout << "  " << u8"╭━━━╮╱╱╱╱╱╭╮╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╭━━━╮╱╱╱╭╮" << endl;
+			cout << "  " << u8"┃╭━╮┃╱╱╱╱╱┃┃╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱┃╭━╮┃╱╱╱┃┃" << endl;
+			cout << "  " << u8"┃┃╱┃┣━╮╭━━┫┃╭┳━┳┳━╮╭━━┳━━┳━╮╱┃┃╱┃┣╮╭┳┫┃╭┳━━┳╮╭╮" << endl;
+			cout << "  " << u8"┃╰━╯┃╭╮┫╭╮┃╰╯┫╭╋┫╭╮┫╭╮┃╭╮┃╭╮╮┃╰━╯┃╰╯┣┫╰╯┫╭╮┃╰╯┃" << endl;
+			cout << "  " << u8"┃╭━╮┃┃┃┃╰╯┃╭╮┫┃┃┃┃┃┃╰╯┃╭╮┃┃┃┃┃╭━╮┃┃┃┃┃╭╮┫╰╯┃┃┃┃" << endl;
+			cout << "  " << u8"╰╯╱╰┻╯╰┻━╮┣╯╰┻╯╰┻╯╰┻━╮┣╯╰┻╯╰╯╰╯╱╰┻┻┻┻┻╯╰┻━━┻┻┻╯" << endl;
+			cout << "  " << u8"╱╱╱╱╱╱╱╭━╯┃╱╱╱╱╱╱╱╱╭━╯┃" << endl;
+			cout << "  " << u8"╱╱╱╱╱╱╱╰━━╯╱╱╱╱╱╱╱╱╰━━╯" << endl;
+			cout << endl;
+		}
 
-// Function to add a food item to the cart
-void addToCart(User* user, FoodItem& foodItem) {
-    FoodItem newItem = foodItem;  // Create a copy of the FoodItem object
-    user->cart.push(newItem);     // Push the new item to the cart
-    cout << "-- Food item added to the cart! --" << endl;
-}
+		void printMenu() {
+			cout << "==================================================" << endl;
+			cout << "       Welcome to the Food Delivery System!       " << endl;
+			cout << "--------------------------------------------------" << endl;
+			cout << "   1. Display available food items" << endl;
+			cout << "--------------------------------------------------" << endl;
+			cout << "   2. Add food item to cart" << endl;
+			cout << "--------------------------------------------------" << endl;
+			cout << "   3. Display cart contents" << endl;
+			cout << "--------------------------------------------------" << endl;
+			cout << "   4. Process orders" << endl;
+			cout << "--------------------------------------------------" << endl;
+			cout << "   5. Search for a food item by name" << endl;
+			cout << "--------------------------------------------------" << endl;
+			cout << "   6. Sort food items by lower" << endl;
+			cout << "--------------------------------------------------" << endl;
+			cout << "   7. Sort food items by higher" << endl;
+			cout << "--------------------------------------------------" << endl;
+			cout << "   8. Display order history" << endl;
+			cout << "--------------------------------------------------" << endl;
+			cout << "   9. Exit" << endl;
+			cout << "--------------------------------------------------" << endl;
+			cout << endl << endl;
+			cout << "Ｅｎｔｅｒ Ｙｏｕｒ Ｃｈｏｉｃｅ :  ";
+		}
 
-// Function to process an order
-void processOrder(User* user, Order order) {
-    cout << "Processing Order ID: " << order.orderId << endl;
-    cout << "Username: " << order.user.username << endl;
-
-    // Process the items in the cart
-    double totalPrice = 0.0;
-    cout << "Cart Contents:" << endl;
-    while (!order.user.cart.isEmpty()) {
-        FoodItem currentItem = order.user.cart.top();
-
-        cout << "+-----------------------------+" << endl;
-        cout << "| ID       : " << setw(17) << left << currentItem.id << " |" << endl;
-        cout << "| Name     : " << setw(17) << left << currentItem.name << " |" << endl;
-        cout << "| Price    : $" << setw(16) << fixed << setprecision(2) << left << currentItem.price << " |" << endl;
-        cout << "| Quantity : " << setw(17) << left << order.quantity << " |" << endl;
-        cout << "+-----------------------------+" << endl;
-
-        totalPrice += (currentItem.price * order.quantity);
-        order.totalPrice = totalPrice;
-        cout << endl;
-        order.user.cart.pop();
-    }
-
-    cout << "Total Price: $" << totalPrice << endl << endl;
-    cout << "-- Order processed successfully! --" << endl;
-
-    user->cart = Stack<FoodItem>(); // Clear the cart
-}
-
-
-// Display the available food items
-void displayAvailableFoodItems(const vector<FoodItem>& foodItems) {
-    clearScreen();
-    cout << ".-----------------------." << endl;
-    cout << "| Available Food Items: |" << endl;
-    cout << "'-----------------------'" << endl;
-    for (const auto& foodItem : foodItems) {
-        cout << "+-----------------------------+" << endl;
-        cout << "| ID    : " << setw(20) << left << foodItem.id << "|" << endl;
-        cout << "| Name  : " << setw(20) << left << foodItem.name << "|" << endl;
-        cout << "| Price : " << setw(20) << left << fixed << setprecision(2) << foodItem.price << "|" << endl;
-        cout << "+-----------------------------+" << endl;
-
-    }
-}
-
-// Display the order history
-void displayOrderHistory(const OrderHistory& orderHistory) {
-    orderHistory.displayOrderHistory();
-}
-
-// Function to handle user's choice
-void handleUserChoice(char choice, User *user, vector<FoodItem>& availableFoodItems, Queue<Order>* orderQueue, OrderHistory* orderHistory) {
-    switch (choice) {
-        case '1': {
-            displayAvailableFoodItems(availableFoodItems);
-            break;
+        void printThankYou() {
+            cout << "-- Exiting the program. Thank you! --" << endl;
         }
-        case '2': {
-            displayAvailableFoodItems(availableFoodItems);
-            // Prompt the user to select a food item
-            int selectedItemId;
-            cout << "--------------------------------------------" << endl;
-            cout << "Eɴᴛᴇʀ ᴛʜᴇ ғᴏᴏᴅ Food ID ᴛᴏ ᴀᴅᴅ ᴛᴏ ᴛʜᴇ ᴄᴀʀᴛ " << endl;
-            cout << "--------------------------------------------" << endl;
-            cout << "Food ID: ";
-            cin >> selectedItemId;
 
-            // Find the selected food item in the available food items list
+        void printInvalidChoice() {
+            cout << "+------------------------------------------------+" << endl;
+            cout << "|        Invalid choice. Please try again.       |" << endl;
+            cout << "+------------------------------------------------+" << endl;
+        }
+
+        void printInvalidFoodItemID() {
+            cout << "+------------------------------------------------+" << endl;
+            cout << "|     Invalid food item ID. Please try again.    |" << endl;
+            cout << "+------------------------------------------------+" << endl;
+        }
+
+        void printOrderSuccess() {
+            cout << "+------------------------------------------------+" << endl;
+            cout << "|            Order successfully added!           |" << endl;
+            cout << "+------------------------------------------------+" << endl;
+        }
+
+        void printCartContents() {
+            cout << "+------------------------------------------------+" << endl;
+            cout << "|                 Cart contents:                 |" << endl;
+            cout << "+------------------------------------------------+" << endl;
+        }
+
+        void printEmptyCart() {
+            cout << "+------------------------------------------------+" << endl;
+            cout << "|              Opps. Cart is empty.              |" << endl;
+            cout << "+------------------------------------------------+" << endl;
+        }
+
+        void printOrderProcessed() {
+            cout << "+------------------------------------------------+" << endl;
+            cout << "|         Order successfully processed!          |" << endl;
+            cout << "+------------------------------------------------+" << endl;
+        }
+
+        void printNoOrderProcess() {
+            cout << "+------------------------------------------------+" << endl;
+            cout << "|             No orders to process.              |" << endl;
+            cout << "+------------------------------------------------+" << endl;
+        }
+
+		void printInfo(Order menu) {
+			cout << "+------------------------------------------------+" << endl;
+			cout << "| Order ID : " << setw(36) << left << menu.orderId << "|" << endl;
+			cout << "| Username : " << setw(36) << left << menu.user.username << "|" << endl;
+			cout << "+------------------------------------------------+" << endl;
+		}
+
+		void printTotalPrice(double total) {
+			cout << "+------------------------------------------------+" << endl;
+			cout << "| Total    : $" << setw(35) << left << fixed << setprecision(2) << total << "|" << endl;
+			cout << "+------------------------------------------------+" << endl;
+		}
+
+		void printFoodMenuItem(FoodItem menu, int *quantity = nullptr) {
+            cout << "+------------------------------------------------+" << endl;
+            cout << "| ID       : " << setw(36) << left << menu.id << "|" << endl;
+            cout << "| Name     : " << setw(36) << left << menu.name << "|" << endl;
+            if (quantity != nullptr) {
+				cout << "| Price    : $" << setw(35) << left << fixed << setprecision(2) << (menu.price * *quantity) << "|" << endl;
+				cout << "| Quantity : " << setw(36) << left << *quantity << "|" << endl;
+			} else {
+				cout << "| Price    : $" << setw(35) << left << fixed << setprecision(2) << menu.price << "|" << endl;
+			}
+            cout << "+------------------------------------------------+" << endl;
+		}
+
+		void printFoodMenus(vector<FoodItem> menus) {
+			cout << "+------------------------------------------------+" << endl;
+			cout << "|              Available Food Items              |" << endl;
+			cout << "+------------------------------------------------+" << endl;
+			for (const auto& menu : menus) {
+				this->printFoodMenuItem(menu);
+			}
+		}
+
+		void printFoodMenus() {
+			this->printFoodMenus(this->menus);
+		}
+
+		void choiceAction() {
+			do {
+				this->printMenu();
+				cin >> choice;
+				cout << endl;
+				this->handleChoice();
+			} while (choice != '9');
+		}
+
+        static string searchField(const FoodItem& item) {
+            return item.name;
+        }
+
+        static bool compareByPriceASC(const FoodItem& item1, const FoodItem& item2) {
+            return item1.price > item2.price;
+        }
+
+        static bool compareByPriceDESC(const FoodItem& item1, const FoodItem& item2) {
+            return item1.price < item2.price;
+        }
+
+		void handleChoice() {
+			switch (choice) {
+				case '1': {
+					clearScreen();
+					this->printLogo();
+					this->printFoodMenus();
+					break;
+				}
+				case '2': {
+					clearScreen();
+					this->printLogo();
+					this->printFoodMenus();
+                    this->addToCartAction();
+					break;
+				}
+                case '3': {
+                    clearScreen();
+					this->printLogo();
+                    this->cartContents();
+                    break;
+                }
+                case '4': {
+                    clearScreen();
+                    this->processOrders();
+                    break;
+                }
+                case '5': {
+                    clearScreen();
+                    string itemName = this->inputSearch();
+                    vector<FoodItem> results = Search<FoodItem>::fuzzy(menus, searchField, itemName);
+                    this->printFoodMenus(results);
+                    break;
+                }
+                case '6': {
+                    clearScreen();
+                    vector<FoodItem> sortedItems = menus;
+                    Sort<FoodItem>::bubble(menus, compareByPriceASC);
+                    this->printFoodMenus(sortedItems);
+                    break;
+                }
+                case '7': {
+                    clearScreen();
+                    vector<FoodItem> sortedItems = menus;
+                    Sort<FoodItem>::bubble(sortedItems, compareByPriceDESC);
+                    this->printFoodMenus(sortedItems);
+                    break;
+                }
+                case '8': {
+                    clearScreen();
+                    orderHistory.displayOrderHistory();
+                    break;
+                }
+                case '9': {
+                    clearScreen();
+                    this->printThankYou();
+                    break;
+                }
+                default:
+                    clearScreen();
+                    this->printInvalidChoice();
+                    break;
+            }
+		}
+
+        void addToCartAction() {
+            int selectedFoodId = this->inputSelectedFoodId();
+            FoodItem* selectedFoodItem = this->checkValidFoodId(selectedFoodId);
+            if (selectedFoodItem != nullptr) {
+                this->addToCart(*selectedFoodItem);
+                int quantity = this->inputQuantity();
+                this->createOrderHistory(quantity);
+                clearScreen();
+				this->printLogo();
+                this->printOrderSuccess();
+            } else {
+                clearScreen();
+				this->printLogo();
+                this->printInvalidFoodItemID();
+            }
+        }
+
+        FoodItem* checkValidFoodId(int selectedFoodId) {
             FoodItem* selectedFoodItem = nullptr;
-            for (auto& foodItem : availableFoodItems) {
-                if (foodItem.id == selectedItemId) {
+            for (auto& foodItem : menus) {
+                if (foodItem.id == selectedFoodId) {
                     selectedFoodItem = &foodItem;
                     break;
                 }
             }
-
-            // Add the selected food item to the user's cart
-            if (selectedFoodItem != nullptr) {
-                clearScreen();
-                addToCart(user, *selectedFoodItem);
-
-                // Prompt the user for the quantity
-                int quantity;
-                cout << "Enter the quantity: ";
-                cin >> quantity;
-
-                // Create an order and enqueue it for processing
-                Order order;
-                order.orderId = -1; // Temporary order ID, will be assigned later
-                order.user = *user;
-                order.quantity = quantity;
-                orderQueue->enqueue(order);
-
-                cout << "-- Order placed successfully! --" << endl;
-            } else {
-                clearScreen();
-                cout << endl << "-- Invalid food item ID. Please try again. --" << endl << endl;
-            }
-            break;
+            return selectedFoodItem;
         }
-        case '3': {
-            clearScreen();
-            cout << "Cart Contents:" << endl;
-            // create temp cart var
-            Stack<FoodItem> tempCart = user->cart;
 
-            if (tempCart.isEmpty()) {
-                cout << "-- Cart is empty --" << endl;
-            }
-
-            while (!tempCart.isEmpty()) {
-                FoodItem currentItem = tempCart.top();  // Use tempCart instead of user->cart
-                cout << "ID: " << currentItem.id << endl;
-                cout << "Name: " << currentItem.name << endl;
-                cout << "Price: $" << currentItem.price << endl;
-                cout << endl;
-                tempCart.pop();
-            }
-            break;
+        int inputSelectedFoodId() {
+            int selectedFoodId;
+			cout << "+------------------------------------------------+" << endl;
+            cout << "| ENTER THE FOOD ID TO ADD THE CART              |" << endl;
+			cout << "+------------------------------------------------+" << endl;
+            cout << "Food ID: ";
+            cin >> selectedFoodId;
+            return selectedFoodId;
         }
-        case '4': {
-            clearScreen();
-            if (orderQueue->isEmpty()) {
-                cout << "No orders to process." << endl;
-            } else {
-                while (!orderQueue->isEmpty()) {
-                    Order currentOrder = orderQueue->peek();
-                    // Assign a random order ID
-                    currentOrder.orderId = generateRandomOrderId();
-                    orderHistory->addOrder(currentOrder);
-                    processOrder(user, currentOrder);
-                    orderQueue->dequeue();
-                }
-            }
-            break;
+
+        int inputQuantity() {
+            int quantity;
+            cout << "Enter the quantity: ";
+            cin >> quantity;
+            return quantity;
         }
-        case '5': {
-            clearScreen();
-            string itemName;
-            cout << "Enter the name of the food item you want to search: ";
-            cin.ignore();
-            getline(cin, itemName);
 
-			vector<FoodItem> results = Search<FoodItem>::fuzzy(availableFoodItems, searchField, itemName);
+        void createOrderHistory(int quantity) {
+            Order order;
+             // Temporary order ID, will be assigned later
+            order.orderId = -1;
+            order.user = this->user;
+            order.quantity = quantity;
+            this->orderQueue.enqueue(order);
+        }
 
-			for (const auto& result : results) {
-				cout << "ID: " << result.id << ", Name: " << result.name << ", Price: " << result.price << endl;
+		void addToCart(FoodItem& foodItem) {
+			FoodItem newItem = foodItem;
+			user.cart.push(newItem);
+		}
+
+		void cartContents() {
+			Stack<FoodItem> tempCart = user.cart;
+
+			if (tempCart.isEmpty()) {
+                this->printEmptyCart();
+                return;
 			}
-            break;
-        }
-        case '6': {
-            clearScreen();
-            vector<FoodItem> sortedItems = availableFoodItems;
-			Sort<FoodItem>::bubble(sortedItems, compareByPriceASC);
-            displayAvailableFoodItems(sortedItems);
-            break;
-        }
-        case '7': {
-            clearScreen();
-            vector<FoodItem> sortedItems = availableFoodItems;
-			Sort<FoodItem>::bubble(sortedItems, compareByPriceDESC);
-            displayAvailableFoodItems(sortedItems);
-            break;
-        }
-        case '8': {
-            clearScreen();
-            displayOrderHistory(*orderHistory);
-			// orderHistory->displayOrderHistory();
-            break;
-        }
-        case '9': {
-            clearScreen();
-            cout << "-- Exiting the program. Thank you! --" << endl;
-            break;
-        }
-        default:
-            clearScreen();
-            cout << "-- Invalid choice. Please try again. --" << endl;
-            break;
-    }
-}
 
-void displayLogo() {
-    cout << endl << endl;
-    cout << " " << u8"╭━━━╮╱╱╱╱╱╭╮╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╭━━━╮╱╱╱╭╮" << endl;
-    cout << " " << u8"┃╭━╮┃╱╱╱╱╱┃┃╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱┃╭━╮┃╱╱╱┃┃" << endl;
-    cout << " " << u8"┃┃╱┃┣━╮╭━━┫┃╭┳━┳┳━╮╭━━┳━━┳━╮╱┃┃╱┃┣╮╭┳┫┃╭┳━━┳╮╭╮" << endl;
-    cout << " " << u8"┃╰━╯┃╭╮┫╭╮┃╰╯┫╭╋┫╭╮┫╭╮┃╭╮┃╭╮╮┃╰━╯┃╰╯┣┫╰╯┫╭╮┃╰╯┃" << endl;
-    cout << " " << u8"┃╭━╮┃┃┃┃╰╯┃╭╮┫┃┃┃┃┃┃╰╯┃╭╮┃┃┃┃┃╭━╮┃┃┃┃┃╭╮┫╰╯┃┃┃┃" << endl;
-    cout << " " << u8"╰╯╱╰┻╯╰┻━╮┣╯╰┻╯╰┻╯╰┻━╮┣╯╰┻╯╰╯╰╯╱╰┻┻┻┻┻╯╰┻━━┻┻┻╯" << endl;
-    cout << " " << u8"╱╱╱╱╱╱╱╭━╯┃╱╱╱╱╱╱╱╱╭━╯┃" << endl;
-    cout << " " << u8"╱╱╱╱╱╱╱╰━━╯╱╱╱╱╱╱╱╱╰━━╯" << endl;
-    cout << endl << endl;
-}
+			this->printCartContents();
+			while (!tempCart.isEmpty()) {
+				FoodItem currentItem = tempCart.top();
+                //! fixme later
+                this->printFoodMenuItem(currentItem);
+				tempCart.pop();
+			}
+		}
 
-void printMenu() {
-    cout << "=================================================" << endl;
-    cout << "\tWelcome to the Food Delivery System!" << endl;
-    cout << "-------------------------------------------------" << endl;
-    cout << "\t1. Display available food items" << endl;
-    cout << "-------------------------------------------------" << endl;
-    cout << "\t2. Add food item to cart" << endl;
-    cout << "-------------------------------------------------" << endl;
-    cout << "\t3. Display cart contents" << endl;
-    cout << "-------------------------------------------------" << endl;
-    cout << "\t4. Process orders" << endl;
-    cout << "-------------------------------------------------" << endl;
-    cout << "\t5. Search for a food item by name" << endl;
-    cout << "-------------------------------------------------" << endl;
-    cout << "\t6. Sort food items by lower" << endl;
-    cout << "-------------------------------------------------" << endl;
-    cout << "\t7. Sort food items by higher" << endl;
-    cout << "-------------------------------------------------" << endl;
-    cout << "\t8. Display order history" << endl;
-    cout << "-------------------------------------------------" << endl;
-    cout << "\t9. Exit" << endl;
-    cout << "-------------------------------------------------" << endl;
-    cout << endl << endl;
-    cout << "Ｅｎｔｅｒ Ｙｏｕｒ Ｃｈｏｉｃｅ :  ";
-}
+		string inputSearch() {
+			string itemName;
+			cout << "Enter the name of the food item you want to search: ";
+			cin.ignore();
+			getline(cin, itemName);
+			return itemName;
+		}
 
-void initializeVariables(User& user, vector<FoodItem>& availableFoodItems, Queue<Order>& orderQueue, OrderHistory& orderHistory) {
-    // Initialize the user
-    user.username = "JohnDoe";
-    user.password = "password123";
+		void processOrders() {
+			if (this->orderQueue.isEmpty()) {
+				this->printLogo();
+				this->printNoOrderProcess();
+			} else {
+				while (!this->orderQueue.isEmpty()) {
+					Order currentOrder = this->orderQueue.peek();
+					currentOrder.orderId = generateRandomOrderId();
+					orderHistory.addOrder(currentOrder);
+					bool isLast = this->orderQueue.isLast();
+					this->processOrder(currentOrder, isLast);
+					this->orderQueue.dequeue();
+				}
 
-    // Initialize the available food items
-    FoodItem foodItem1 = {1, "Burager", 5.99};
-    FoodItem foodItem2 = {2, "Pizza", 8.99};
+			}
+		}
 
-    // Add the food items to the vector
-    availableFoodItems.push_back(foodItem1);
-    availableFoodItems.push_back(foodItem2);
+		void processOrder(Order order, bool isLast) {
+			if (isLast) {
+				this->printInfo(order);
+				this->printCartContents();
+			}
 
-    // Initialize the order queue and order history
-    orderQueue = Queue<Order>();
-    orderHistory = OrderHistory();
-}
+			// Process the items in the cart
+			double totalPrice = 0.0;
+			while (!order.user.cart.isEmpty()) {
+				FoodItem currentItem = order.user.cart.top();
+				if (isLast) {
+					this->printFoodMenuItem(currentItem, &order.quantity);
+				}
+				totalPrice += (currentItem.price * order.quantity);
+				order.totalPrice = totalPrice;
+				order.user.cart.pop();
+			}
 
+			if (isLast) {
+				this->printTotalPrice(totalPrice);
+				this->printOrderProcessed();
+			}
+
+			user.cart = Stack<FoodItem>();
+		}
+};
 
 int main() {
+    clearScreen();
 
-    User user;
-    vector<FoodItem> availableFoodItems;
-    Queue<Order> orderQueue;
-    OrderHistory orderHistory;
+    User user = {
+		"admin",
+		"passsword"
+	};
 
-    initializeVariables(user, availableFoodItems, orderQueue, orderHistory);
-    displayLogo();
+    vector<FoodItem> availableFoodItems{
+		{1, "Burger", 5.99},
+		{2, "Pizza", 8.99},
+		{3, "Es Teh", 8.99},
+		{4, "Es Jeruk", 8.99},
+		{5, "Kerupuk", 8.99},
+		{6, "Nasi", 8.99},
+		{7, "Sayur", 8.99},
+		{8, "Sambal", 8.99},
+	};
 
-    // Menu loop
-    char choice;
-    do {
-
-        printMenu();
-        cin >> choice;
-        cout << endl;
-        handleUserChoice(choice, &user, availableFoodItems, &orderQueue, &orderHistory);
-
-    } while (choice != '9');
+	Action action = Action(user, availableFoodItems);
+	action.run();
 
     return 0;
 }
