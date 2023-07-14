@@ -30,7 +30,10 @@ void OrderHistory::displayOrderHistory() const {
 		cout << "| Username : " << setw(36) << left << currentNode->order.user.username << "|" << endl;
 		cout << "| Price    : " << setw(36) << left << formatCurrency(currentNode->order.totalPrice) << "|" << endl;
 
-		cout << "| Items    : " << setw(36) << left << " " << "|" << endl;
+		if (!currentNode->order.items.isEmpty()) {
+			cout << "| Items    : " << setw(36) << left << " " << "|" << endl;
+		}
+
 		while (!currentNode->order.items.isEmpty()) {
 			FoodItem currentItem = currentNode->order.items.top();
 			string itemName = currentItem.name + " (x" + to_string(currentItem.quantity) + ")";

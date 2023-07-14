@@ -311,6 +311,11 @@ string Action::inputSearch() {
 }
 
 void Action::processOrders() {
+	if (user.cart.isEmpty()) {
+		this->printEmptyCart();
+		return;
+	}
+
 	Order order;
 	order.orderId = generateRandomOrderId();
 	order.user = this->user;
